@@ -7,6 +7,7 @@
   "scripts": {
     "build": "yarn workspaces run build",
     "test": "yarn workspaces run test",
+    "lint": "eslint 'packages/*/src/**/*.ts'",
     "migrate": "yarn workspace @ledger/shared migrate",
     "migrate:rollback": "yarn workspace @ledger/shared migrate:rollback",
     "dev:api": "yarn workspace @ledger/api dev",
@@ -16,6 +17,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "typescript": "^5.3.3"
+    "eslint": "^9.17.0",
+    "eslint-plugin-jest": "^28.9.0",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.19.0"
   }
 }
