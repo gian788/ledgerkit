@@ -1,6 +1,7 @@
 // @ts-check
 import tseslint from 'typescript-eslint';
 import pluginJest from 'eslint-plugin-jest';
+import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   { ignores: ['**/dist/**', '**/node_modules/**'] },
@@ -13,6 +14,10 @@ export default tseslint.config(
       '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
     },
   },
+
+  // Disable ESLint formatting rules that conflict with Prettier (must come after
+  // all other configs that might enable formatting rules)
+  prettier,
 
   // Jest rules scoped to test files only
   {

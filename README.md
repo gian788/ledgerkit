@@ -21,13 +21,13 @@ General-purpose financial ledger with a REST API. Implements double-entry bookke
 
 **Services:**
 
-| Service | Description |
-|---|---|
-| `packages/api` | Stateless Express API — accepts transactions, manages ledgers and accounts |
-| `packages/settlement-worker` | Kafka consumer — batches by destination wallet, settles and writes journal entries |
-| `packages/outbox-relay` | Polls the outbox table, publishes events to Kafka (single active instance via leader election) |
-| `packages/audit-consumer` | Kafka consumer — writes audit events to S3 Object Lock |
-| `packages/shared` | DB client, migrations, types, OpenTelemetry setup, Kafka config |
+| Service                      | Description                                                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `packages/api`               | Stateless Express API — accepts transactions, manages ledgers and accounts                     |
+| `packages/settlement-worker` | Kafka consumer — batches by destination wallet, settles and writes journal entries             |
+| `packages/outbox-relay`      | Polls the outbox table, publishes events to Kafka (single active instance via leader election) |
+| `packages/audit-consumer`    | Kafka consumer — writes audit events to S3 Object Lock                                         |
+| `packages/shared`            | DB client, migrations, types, OpenTelemetry setup, Kafka config                                |
 
 **Managed dependencies (outside K8s):** Postgres (RDS/Aurora/Cloud SQL) and Kafka (MSK/Confluent Cloud).
 

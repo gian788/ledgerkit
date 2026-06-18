@@ -8,8 +8,18 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('transactions', (table) => {
     table.uuid('id').primary();
     table.string('idempotency_key').notNullable().unique();
-    table.uuid('source_wallet_id').notNullable().references('id').inTable('wallets').onDelete('RESTRICT');
-    table.uuid('destination_wallet_id').notNullable().references('id').inTable('wallets').onDelete('RESTRICT');
+    table
+      .uuid('source_wallet_id')
+      .notNullable()
+      .references('id')
+      .inTable('wallets')
+      .onDelete('RESTRICT');
+    table
+      .uuid('destination_wallet_id')
+      .notNullable()
+      .references('id')
+      .inTable('wallets')
+      .onDelete('RESTRICT');
     table.bigInteger('amount').notNullable();
     table.specificType('currency', 'CHAR(3)').notNullable();
     table.specificType('status', 'transaction_status').notNullable().defaultTo('PENDING');

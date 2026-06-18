@@ -3,6 +3,7 @@
 ## DD-11: REST API with nested writes, flat reads
 
 **Design principles:**
+
 - Write operations nested under the ledger to enforce context
 - Read operations flat by globally-unique ID for convenience
 - Journal entries are read-only (written by settlement worker, not API consumers)
@@ -13,6 +14,7 @@
 ## Endpoints
 
 **Ledgers**
+
 ```
 POST   /ledgers                                    Create a ledger
 GET    /ledgers/:ledger_id                          Get a ledger
@@ -20,6 +22,7 @@ GET    /ledgers                                     List ledgers
 ```
 
 **Accounts**
+
 ```
 POST   /ledgers/:ledger_id/accounts                 Create an account (wallet)
 GET    /accounts/:id                                Get an account
@@ -28,6 +31,7 @@ GET    /ledgers/:ledger_id/accounts                 List accounts (filters: curr
 ```
 
 **Transactions**
+
 ```
 POST   /ledgers/:ledger_id/transactions             Create a transaction (→ PENDING, reserves funds)
 GET    /transactions/:tx_id                         Get a transaction
@@ -36,6 +40,7 @@ GET    /ledgers/:ledger_id/transactions             List transactions (filters: 
 ```
 
 **Journal Entries (read-only)**
+
 ```
 GET    /journal-entries/:id                         Get a journal entry with its lines
 GET    /ledgers/:ledger_id/journal-entries           List journal entries (filters: transaction_id, wallet_id, date range)

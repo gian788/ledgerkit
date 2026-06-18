@@ -21,6 +21,7 @@ Two-phase flow:
 ## DD-4: Balance model — materialised balance + pending reservation
 
 Each wallet stores two fields:
+
 - `balance` — settled balance (only modified at settlement time)
 - `pending_amount` — sum of all in-flight PENDING reservations
 
@@ -49,6 +50,7 @@ Zero rows affected = insufficient funds. No application-level retry needed; the 
 - **CANCELLED** → user-initiated cancellation, reservation released (pending_amount decremented, balance untouched)
 
 **Cancellation is best-effort via status check, not queue interception:**
+
 - Cancel request: `UPDATE transactions SET status = 'CANCELLED' WHERE id = :id AND status = 'PENDING'` + atomic `pending_amount` release. If zero rows affected, transaction already settled — return "too late."
 - Settlement worker: `UPDATE transactions SET status = 'SETTLED' WHERE id = :id AND status = 'PENDING'` inside its DB transaction. If zero rows affected (cancelled or already settled), abort and commit Kafka offset.
 - Race safety: both sides use conditional UPDATE on `status = 'PENDING'` — exactly one wins, no double release of `pending_amount`.

@@ -7,7 +7,11 @@ import { AppError } from '../middleware/errorHandler.js';
 function requireString(body: Record<string, unknown>, field: string): string {
   const value = body[field];
   if (typeof value !== 'string' || value.trim() === '') {
-    throw new AppError(400, 'VALIDATION_ERROR', `${field} is required and must be a non-empty string`);
+    throw new AppError(
+      400,
+      'VALIDATION_ERROR',
+      `${field} is required and must be a non-empty string`,
+    );
   }
   return value.trim();
 }
@@ -76,11 +80,21 @@ export function makeOrganisationRoutes(db: Knex): Router {
 
       const currency = requireString(body, 'currency');
       if (!/^[A-Z]{3}$/.test(currency)) {
-        throw new AppError(400, 'VALIDATION_ERROR', 'currency must be a 3-letter ISO 4217 code (e.g. GBP)');
+        throw new AppError(
+          400,
+          'VALIDATION_ERROR',
+          'currency must be a 3-letter ISO 4217 code (e.g. GBP)',
+        );
       }
 
       const [wallet] = await db('wallets')
-        .insert({ id: randomUUID(), organisation_id: org_id, currency, balance: 0, pending_amount: 0 })
+        .insert({
+          id: randomUUID(),
+          organisation_id: org_id,
+          currency,
+          balance: 0,
+          pending_amount: 0,
+        })
         .returning('*');
 
       res.status(201).json(wallet);
@@ -97,9 +111,7 @@ export function makeOrganisationRoutes(db: Knex): Router {
       const org = await db<Organisation>('organisations').where({ id: org_id }).first();
       if (!org) throw new AppError(404, 'NOT_FOUND', 'Organisation not found');
 
-      let query = db('wallets')
-        .where({ organisation_id: org_id })
-        .orderBy('created_at', 'asc');
+      let query = db('wallets').where({ organisation_id: org_id }).orderBy('created_at', 'asc');
 
       const currency = req.query['currency'];
       if (typeof currency === 'string' && currency !== '') {

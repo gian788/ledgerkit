@@ -14,6 +14,7 @@ Decoupled architecture: API nodes → queue → settlement workers, each scaling
 4. **Settlement worker** — consumes from queue, batches by destination wallet, settles the batch in one DB transaction.
 
 **Why outbox over publish-after-commit + sweeper:**
+
 - No crash window — outbox row is committed atomically with the transaction, so no event is ever silently lost.
 - Better observability — outbox table is inspectable (unpublished count, oldest row age, relay lag).
 - Tradeoff accepted: extra DB writes (outbox row per transaction), extra component (relay process), and outbox table maintenance (cleanup of published rows).
@@ -27,6 +28,7 @@ Settlement worker batches transactions by destination wallet to reduce write con
 Strategy: collect messages for up to N messages or T milliseconds (whichever comes first), group by destination wallet, settle each wallet's batch in one DB transaction.
 
 Per batch, the settlement worker:
+
 1. Insert journal entries + lines for all transactions in the batch
 2. Decrement sender `pending_amount` and `balance` per transaction (may touch multiple sender wallets)
 3. Increment receiver `balance` once with the aggregated sum
@@ -39,6 +41,7 @@ This reduces receiver-side contention from N individual updates to 1 per batch w
 ## DD-10: Queue technology — Kafka
 
 Kafka chosen for:
+
 - **Partition-based ordering** — partition by destination wallet ID, so all transactions for the same wallet land on the same consumer. Natural fit for batching.
 - **Consumer groups** — settlement workers scale horizontally, each owning a subset of partitions.
 - **Replay capability** — if a settlement worker needs to reprocess, the offset can be rewound.

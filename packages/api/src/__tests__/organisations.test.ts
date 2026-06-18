@@ -105,8 +105,12 @@ describe('Organisations', () => {
   // ── GET /organisations ─────────────────────────────────────────────────────
 
   it('lists all organisations', async () => {
-    await request(app).post('/organisations').send({ name: 'Org A', jurisdiction: 'GB', residency: 'GB' });
-    await request(app).post('/organisations').send({ name: 'Org B', jurisdiction: 'US', residency: 'US' });
+    await request(app)
+      .post('/organisations')
+      .send({ name: 'Org A', jurisdiction: 'GB', residency: 'GB' });
+    await request(app)
+      .post('/organisations')
+      .send({ name: 'Org B', jurisdiction: 'US', residency: 'US' });
 
     const res = await request(app).get('/organisations');
     expect(res.status).toBe(200);

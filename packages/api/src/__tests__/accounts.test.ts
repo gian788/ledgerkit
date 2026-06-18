@@ -163,7 +163,9 @@ describe('Accounts (Wallets)', () => {
   });
 
   it('returns 404 listing accounts for unknown org', async () => {
-    const res = await request(app).get('/organisations/00000000-0000-0000-0000-000000000000/accounts');
+    const res = await request(app).get(
+      '/organisations/00000000-0000-0000-0000-000000000000/accounts',
+    );
     expect(res.status).toBe(404);
   });
 });

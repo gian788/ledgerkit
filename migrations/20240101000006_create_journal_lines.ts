@@ -7,7 +7,12 @@ export async function up(knex: Knex): Promise<void> {
 
   await knex.schema.createTable('journal_lines', (table) => {
     table.uuid('id').primary();
-    table.uuid('journal_entry_id').notNullable().references('id').inTable('journal_entries').onDelete('RESTRICT');
+    table
+      .uuid('journal_entry_id')
+      .notNullable()
+      .references('id')
+      .inTable('journal_entries')
+      .onDelete('RESTRICT');
     table.uuid('wallet_id').notNullable().references('id').inTable('wallets').onDelete('RESTRICT');
     table.bigInteger('amount').notNullable();
     table.specificType('direction', 'journal_line_direction').notNullable();

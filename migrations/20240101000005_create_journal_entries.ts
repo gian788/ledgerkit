@@ -3,7 +3,12 @@ import type { Knex } from 'knex';
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('journal_entries', (table) => {
     table.uuid('id').primary();
-    table.uuid('transaction_id').notNullable().references('id').inTable('transactions').onDelete('RESTRICT');
+    table
+      .uuid('transaction_id')
+      .notNullable()
+      .references('id')
+      .inTable('transactions')
+      .onDelete('RESTRICT');
     table.text('description').notNullable();
     table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
 

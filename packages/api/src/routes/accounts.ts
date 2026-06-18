@@ -9,9 +9,7 @@ export function makeAccountRoutes(db: Knex): Router {
   // GET /accounts/:id
   router.get('/:id', async (req, res, next) => {
     try {
-      const wallet = await db<Wallet>('wallets')
-        .where({ id: req.params['id'] })
-        .first();
+      const wallet = await db<Wallet>('wallets').where({ id: req.params['id'] }).first();
 
       if (!wallet) throw new AppError(404, 'NOT_FOUND', 'Account not found');
       res.json(wallet);
@@ -23,9 +21,7 @@ export function makeAccountRoutes(db: Knex): Router {
   // GET /accounts/:id/balance
   router.get('/:id/balance', async (req, res, next) => {
     try {
-      const wallet = await db<Wallet>('wallets')
-        .where({ id: req.params['id'] })
-        .first();
+      const wallet = await db<Wallet>('wallets').where({ id: req.params['id'] }).first();
 
       if (!wallet) throw new AppError(404, 'NOT_FOUND', 'Account not found');
 

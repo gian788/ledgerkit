@@ -8,7 +8,12 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('outbox', (table) => {
     table.uuid('id').primary();
     table.specificType('type', 'outbox_event_type').notNullable();
-    table.uuid('transaction_id').notNullable().references('id').inTable('transactions').onDelete('RESTRICT');
+    table
+      .uuid('transaction_id')
+      .notNullable()
+      .references('id')
+      .inTable('transactions')
+      .onDelete('RESTRICT');
     table.jsonb('payload').notNullable();
     table.boolean('published').notNullable().defaultTo(false);
     table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
