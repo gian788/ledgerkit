@@ -1,7 +1,8 @@
 import { createApp } from './app.js';
-import { config } from '@ledger/shared';
+import { config, getDb } from '@ledger/shared';
 
-const app = createApp();
+const db = getDb();
+const app = createApp(db);
 
 const server = app.listen(config.api.port, () => {
   console.log(`API listening on port ${config.api.port}`);

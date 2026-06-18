@@ -42,6 +42,7 @@ export interface Wallet {
   balance: bigint;
   pending_amount: bigint;
   created_at: Date;
+  updated_at: Date;
 }
 
 export interface Transaction {

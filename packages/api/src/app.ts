@@ -1,8 +1,11 @@
 import express from 'express';
+import type { Knex } from 'knex';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { makeOrganisationRoutes } from './routes/organisations.js';
+import { makeAccountRoutes } from './routes/accounts.js';
 
-export function createApp(): express.Application {
+export function createApp(db: Knex): express.Application {
   const app = express();
 
   // Serialize BigInt as string — amounts from the DB are BigInt, JSON.stringify
@@ -19,22 +22,11 @@ export function createApp(): express.Application {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // ── Business routes (not yet implemented) ────────────────────────────────
-  // POST   /ledgers
-  // GET    /ledgers/:ledger_id
-  // GET    /ledgers
-  // POST   /ledgers/:ledger_id/accounts
-  // GET    /accounts/:id
-  // GET    /accounts/:id/balance
-  // GET    /ledgers/:ledger_id/accounts
-  // POST   /ledgers/:ledger_id/transactions
-  // GET    /transactions/:tx_id
-  // POST   /transactions/:tx_id/cancel
-  // GET    /ledgers/:ledger_id/transactions
-  // GET    /journal-entries/:id
-  // GET    /ledgers/:ledger_id/journal-entries
+  // ── Business routes ───────────────────────────────────────────────────────
+  app.use('/organisations', makeOrganisationRoutes(db));
+  app.use('/accounts', makeAccountRoutes(db));
 
-  // ── 404 catch-all (must be after all routes) ─────────────────────────────
+  // ── 404 catch-all ─────────────────────────────────────────────────────────
   app.use((_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found.' } });
   });

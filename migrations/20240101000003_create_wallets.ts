@@ -8,6 +8,8 @@ export async function up(knex: Knex): Promise<void> {
     table.bigInteger('balance').notNullable().defaultTo(0);
     table.bigInteger('pending_amount').notNullable().defaultTo(0);
     table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
+    // Updated by the settlement worker on every balance change; used by the balance endpoint.
+    table.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
 
     table.index('organisation_id');
 
