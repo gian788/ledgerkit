@@ -3,13 +3,13 @@ import type { Knex } from 'knex';
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('wallets', (table) => {
     table.uuid('id').primary();
-    table.uuid('ledger_id').notNullable().references('id').inTable('ledgers').onDelete('RESTRICT');
+    table.uuid('organisation_id').notNullable().references('id').inTable('organisations').onDelete('RESTRICT');
     table.specificType('currency', 'CHAR(3)').notNullable();
     table.bigInteger('balance').notNullable().defaultTo(0);
     table.bigInteger('pending_amount').notNullable().defaultTo(0);
     table.timestamp('created_at', { useTz: true }).notNullable().defaultTo(knex.fn.now());
 
-    table.index('ledger_id');
+    table.index('organisation_id');
 
     // Balance invariant: available funds = balance - pending_amount >= 0.
     // Enforced here as a belt-and-suspenders guard; the real enforcement is the

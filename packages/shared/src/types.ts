@@ -35,16 +35,9 @@ export interface User {
   created_at: Date;
 }
 
-export interface Ledger {
-  id: string;
-  organisation_id: string;
-  name: string;
-  created_at: Date;
-}
-
 export interface Wallet {
   id: string;
-  ledger_id: string;
+  organisation_id: string;
   currency: string;
   balance: bigint;
   pending_amount: bigint;
