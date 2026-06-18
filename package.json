@@ -1,0 +1,21 @@
+{
+  "name": "ledger",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "yarn workspaces run build",
+    "test": "yarn workspaces run test",
+    "migrate": "yarn workspace @ledger/shared migrate",
+    "migrate:rollback": "yarn workspace @ledger/shared migrate:rollback",
+    "dev:api": "yarn workspace @ledger/api dev",
+    "dev:settlement-worker": "yarn workspace @ledger/settlement-worker dev",
+    "dev:outbox-relay": "yarn workspace @ledger/outbox-relay dev",
+    "dev:audit-consumer": "yarn workspace @ledger/audit-consumer dev"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

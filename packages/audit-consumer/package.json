@@ -1,0 +1,16 @@
+{
+  "name": "@ledger/audit-consumer",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@ledger/shared": "*"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}
