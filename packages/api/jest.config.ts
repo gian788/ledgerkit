@@ -1,19 +1,34 @@
 import type { Config } from 'jest';
 
-const config: Config = {
+const sharedConfig = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
-  testMatch: ['**/__tests__/**/*.test.ts'],
-  // testcontainers can take 30-60s to pull and start on first run
-  testTimeout: 60000,
-  // Resolve @ledger/shared directly from TypeScript source so tests don't
-  // require a prior build of the shared package.
+  testEnvironment: 'node' as const,
   moduleNameMapper: {
-    // ts-jest resolves .ts sources directly; strip the .js extension that the
-    // compiled output uses so imports like './foo.js' resolve to './foo.ts'.
+    // ts-jest resolves .ts sources directly; strip the .js extension used in
+    // compiled output so imports like './foo.js' resolve to './foo.ts'.
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    // Resolve @ledger/shared from TypeScript source so tests don't require a
+    // prior build of the shared package.
     '^@ledger/shared$': '<rootDir>/../shared/src/index.ts',
   },
+};
+
+const config: Config = {
+  // Per-test timeout. beforeAll has its own timeout (passed as second arg)
+  // so testcontainers startup is handled separately; 30s is plenty per test.
+  testTimeout: 30_000,
+  projects: [
+    {
+      ...sharedConfig,
+      displayName: 'unit',
+      testMatch: ['<rootDir>/src/__tests__/unit/**/*.test.ts'],
+    },
+    {
+      ...sharedConfig,
+      displayName: 'integration',
+      testMatch: ['<rootDir>/src/__tests__/integration/**/*.test.ts'],
+    },
+  ],
 };
 
 export default config;

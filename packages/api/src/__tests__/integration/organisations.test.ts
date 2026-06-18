@@ -1,7 +1,7 @@
 import request from 'supertest';
 import type { Knex } from 'knex';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { createApp } from '../app';
+import { createApp } from '../../app';
 import { startTestDb, stopTestDb, cleanDb } from './helpers';
 
 describe('Organisations', () => {

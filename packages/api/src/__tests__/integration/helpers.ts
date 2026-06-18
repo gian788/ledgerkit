@@ -7,7 +7,7 @@ import path from 'path';
 // BigInt for BIGINT columns, matching production behaviour.
 pgTypes.setTypeParser(20, BigInt);
 
-const MIGRATIONS_DIR = path.resolve(__dirname, '../../../../../migrations');
+const MIGRATIONS_DIR = path.resolve(__dirname, '../../../../../../migrations');
 
 export interface TestDb {
   db: Knex;
