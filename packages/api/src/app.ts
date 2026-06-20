@@ -4,6 +4,7 @@ import { requestIdMiddleware } from './middleware/requestId.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { makeOrganisationRoutes } from './routes/organisations.js';
 import { makeAccountRoutes } from './routes/accounts.js';
+import { makeTransactionRoutes } from './routes/transactions.js';
 
 export function createApp(db: Knex): express.Application {
   const app = express();
@@ -25,6 +26,7 @@ export function createApp(db: Knex): express.Application {
   // ── Business routes ───────────────────────────────────────────────────────
   app.use('/organisations', makeOrganisationRoutes(db));
   app.use('/accounts', makeAccountRoutes(db));
+  app.use('/transactions', makeTransactionRoutes(db));
 
   // ── 404 catch-all ─────────────────────────────────────────────────────────
   app.use((_req, res) => {
