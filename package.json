@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "migrate": "yarn workspace @ledger/shared migrate",
     "migrate:rollback": "yarn workspace @ledger/shared migrate:rollback",
+    "dev": "concurrently -n api,worker,relay,audit -c cyan,green,yellow,magenta \"yarn dev:api\" \"yarn dev:settlement-worker\" \"yarn dev:outbox-relay\" \"yarn dev:audit-consumer\"",
     "dev:api": "yarn workspace @ledger/api dev",
     "dev:settlement-worker": "yarn workspace @ledger/settlement-worker dev",
     "dev:outbox-relay": "yarn workspace @ledger/outbox-relay dev",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "concurrently": "^10.0.3",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jest": "^28.9.0",
