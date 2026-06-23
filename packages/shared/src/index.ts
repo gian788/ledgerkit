@@ -1,3 +1,3 @@
-export * from './types.js';
-export * from './config.js';
-export { getDb, closeDb } from './db.js';
+export * from './types';
+export * from './config';
+export { getDb, closeDb } from './db';

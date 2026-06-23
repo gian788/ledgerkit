@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Knex } from 'knex';
-import { makeAccountsController } from '../controllers/accounts.js';
+import { makeAccountsController } from '../controllers/accounts';
 
 export function makeAccountRoutes(db: Knex): Router {
   const router = Router();

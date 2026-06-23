@@ -1,4 +1,4 @@
-import { createApp } from './app.js';
+import { createApp } from './app';
 import { config, getDb } from '@ledger/shared';
 
 const db = getDb();

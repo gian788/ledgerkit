@@ -1,6 +1,6 @@
 import knex, { type Knex } from 'knex';
 import { types as pgTypes } from 'pg';
-import { config } from './config.js';
+import { config } from './config';
 
 // Return BIGINT (OID 20) columns as JavaScript BigInt instead of string.
 // BigInt is not JSON-serializable — callers must convert via .toString() before

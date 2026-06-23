@@ -2,8 +2,8 @@ import { randomUUID } from 'crypto';
 import type { RequestHandler } from 'express';
 import type { Knex } from 'knex';
 import type { Organisation } from '@ledger/shared';
-import { AppError } from '../middleware/errorHandler.js';
-import { requireString } from '../utils/validation.js';
+import { AppError } from '../middleware/errorHandler';
+import { requireString } from '../utils/validation';
 
 export function makeOrganisationsController(db: Knex) {
   const create: RequestHandler = async (req, res, next) => {

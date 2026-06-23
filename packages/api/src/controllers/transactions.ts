@@ -3,8 +3,8 @@ import type { RequestHandler } from 'express';
 import type { Knex } from 'knex';
 import { TransactionStatus, OutboxEventType } from '@ledger/shared';
 import type { Transaction, Wallet } from '@ledger/shared';
-import { AppError } from '../middleware/errorHandler.js';
-import { requireString, requirePositiveInteger, requireUUID } from '../utils/validation.js';
+import { AppError } from '../middleware/errorHandler';
+import { requireString, requirePositiveInteger, requireUUID } from '../utils/validation';
 
 function isUniqueViolation(err: unknown): boolean {
   return (

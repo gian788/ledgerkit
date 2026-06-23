@@ -1,10 +1,10 @@
 import express from 'express';
 import type { Knex } from 'knex';
-import { requestIdMiddleware } from './middleware/requestId.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { makeOrganisationRoutes } from './routes/organisations.js';
-import { makeAccountRoutes } from './routes/accounts.js';
-import { makeTransactionRoutes } from './routes/transactions.js';
+import { requestIdMiddleware } from './middleware/requestId';
+import { errorHandler } from './middleware/errorHandler';
+import { makeOrganisationRoutes } from './routes/organisations';
+import { makeAccountRoutes } from './routes/accounts';
+import { makeTransactionRoutes } from './routes/transactions';
 
 export function createApp(db: Knex): express.Application {
   const app = express();

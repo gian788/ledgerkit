@@ -4,11 +4,6 @@ const sharedConfig = {
   preset: 'ts-jest',
   testEnvironment: 'node' as const,
   moduleNameMapper: {
-    // ts-jest resolves .ts sources directly; strip the .js extension used in
-    // compiled output so imports like './foo.js' resolve to './foo.ts'.
-    '^(\\.{1,2}/.*)\\.js$': '$1',
-    // Resolve @ledger/shared from TypeScript source so tests don't require a
-    // prior build of the shared package.
     '^@ledger/shared$': '<rootDir>/../shared/src/index.ts',
   },
 };

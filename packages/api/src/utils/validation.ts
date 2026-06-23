@@ -1,4 +1,4 @@
-import { AppError } from '../middleware/errorHandler.js';
+import { AppError } from '../middleware/errorHandler';
 
 export function requireString(body: Record<string, unknown>, field: string): string {
   const value = body[field];
