@@ -1,0 +1,620 @@
+openapi: 3.1.0
+
+info:
+  title: Ledger API
+  version: 1.0.0
+  description: |
+    General-purpose financial ledger with double-entry bookkeeping.
+
+    ## Key concepts
+
+    - **Organisation** — top-level entity that owns accounts (wallets) and initiates transactions.
+    - **Account** — a wallet denominated in a single currency (ISO 4217). Holds a `balance` and a `pending_amount` for in-flight reservations.
+    - **Transaction** — a transfer between two accounts. Created as `PENDING` (funds reserved synchronously), then settled asynchronously by the settlement worker.
+    - **Journal entry** — immutable double-entry record written at settlement. Sum of debits always equals sum of credits.
+
+    ## Amounts
+
+    All monetary amounts are integers in the **smallest currency unit** (pence for GBP, cents for USD, etc.).
+    Amounts are returned as **strings** in JSON responses to preserve `bigint` precision.
+
+    ## Idempotency
+
+    `POST /organisations/:org_id/transactions` requires an `idempotency_key` in the request body.
+    Submitting the same key twice returns the original response with HTTP 200 — no duplicate transaction is created.
+
+    ## Error shape
+
+    All errors return a consistent body:
+
+    ```json
+    {
+      "error": { "code": "ERROR_CODE", "message": "Human-readable description." },
+      "request_id": "uuid"
+    }
+    ```
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Organisations
+    description: Top-level entities that own accounts and transactions
+  - name: Accounts
+    description: Wallets denominated in a single currency
+  - name: Transactions
+    description: Fund transfers between accounts
+  - name: Health
+
+# ── Reusable components ────────────────────────────────────────────────────────
+components:
+  parameters:
+    OrgId:
+      name: org_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Organisation UUID
+
+    AccountId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Account (wallet) UUID
+
+    TransactionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Transaction UUID
+
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+      description: Maximum number of results to return (capped at 200)
+
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Number of results to skip for pagination
+
+  schemas:
+    # ── Shared primitives ──────────────────────────────────────────────────────
+    Amount:
+      type: string
+      description: Integer amount in the smallest currency unit, serialised as a string to preserve bigint precision
+      example: "1000000"
+
+    Currency:
+      type: string
+      pattern: "^[A-Z]{3}$"
+      description: ISO 4217 currency code
+      example: GBP
+
+    Uuid:
+      type: string
+      format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    Timestamp:
+      type: string
+      format: date-time
+      example: "2025-01-15T10:30:00.000Z"
+
+    # ── Domain objects ─────────────────────────────────────────────────────────
+    Organisation:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        name:
+          type: string
+          example: Acme Corp
+        jurisdiction:
+          type: string
+          example: GB
+        residency:
+          type: string
+          example: GB
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+      required: [id, name, jurisdiction, residency, created_at]
+
+    Account:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        organisation_id:
+          $ref: "#/components/schemas/Uuid"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        balance:
+          $ref: "#/components/schemas/Amount"
+        pending_amount:
+          $ref: "#/components/schemas/Amount"
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        updated_at:
+          $ref: "#/components/schemas/Timestamp"
+      required: [id, organisation_id, currency, balance, pending_amount, created_at, updated_at]
+
+    AccountBalance:
+      type: object
+      properties:
+        account_id:
+          $ref: "#/components/schemas/Uuid"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        balance:
+          $ref: "#/components/schemas/Amount"
+        pending_amount:
+          $ref: "#/components/schemas/Amount"
+        available:
+          $ref: "#/components/schemas/Amount"
+          description: "balance minus pending_amount — the amount available for new transactions"
+        updated_at:
+          $ref: "#/components/schemas/Timestamp"
+      required: [account_id, currency, balance, pending_amount, available, updated_at]
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        idempotency_key:
+          type: string
+          example: "order-abc123-pay"
+        source_wallet_id:
+          $ref: "#/components/schemas/Uuid"
+        destination_wallet_id:
+          $ref: "#/components/schemas/Uuid"
+        amount:
+          $ref: "#/components/schemas/Amount"
+        currency:
+          $ref: "#/components/schemas/Currency"
+        status:
+          type: string
+          enum: [PENDING, SETTLED, FAILED, CANCELLED]
+          description: |
+            - `PENDING` — funds reserved, settlement in progress
+            - `SETTLED` — journal entry written, balances updated
+            - `FAILED` — settlement could not complete, funds released
+            - `CANCELLED` — user-cancelled before settlement, funds released
+        created_at:
+          $ref: "#/components/schemas/Timestamp"
+        settled_at:
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+      required: [id, idempotency_key, source_wallet_id, destination_wallet_id, amount, currency, status, created_at, settled_at]
+
+    # ── Error ──────────────────────────────────────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: "currency must be a 3-letter ISO 4217 code (e.g. GBP)"
+          required: [code, message]
+        request_id:
+          $ref: "#/components/schemas/Uuid"
+      required: [error]
+
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: { code: NOT_FOUND, message: "Organisation not found" }
+            request_id: "550e8400-e29b-41d4-a716-446655440000"
+
+    Conflict:
+      description: State conflict — e.g. cancelling an already-settled transaction
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: { code: CONFLICT, message: "Transaction cannot be cancelled — current status is SETTLED" }
+            request_id: "550e8400-e29b-41d4-a716-446655440000"
+
+    UnprocessableEntity:
+      description: Business rule violation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            insufficient_funds:
+              summary: Insufficient available balance
+              value:
+                error: { code: INSUFFICIENT_FUNDS, message: "Insufficient available balance" }
+                request_id: "550e8400-e29b-41d4-a716-446655440000"
+            currency_mismatch:
+              summary: Currency mismatch between wallets
+              value:
+                error: { code: CURRENCY_MISMATCH, message: "Source wallet currency is EUR, not GBP" }
+                request_id: "550e8400-e29b-41d4-a716-446655440000"
+
+    ValidationError:
+      description: Request body failed validation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: { code: VALIDATION_ERROR, message: "currency must be a 3-letter ISO 4217 code (e.g. GBP)" }
+            request_id: "550e8400-e29b-41d4-a716-446655440000"
+
+# ── Paths ──────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Health ───────────────────────────────────────────────────────────────────
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags: [Health]
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    $ref: "#/components/schemas/Timestamp"
+                required: [status, timestamp]
+
+  # ── Organisations ─────────────────────────────────────────────────────────────
+  /organisations:
+    post:
+      summary: Create an organisation
+      operationId: createOrganisation
+      tags: [Organisations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Acme Corp
+                jurisdiction:
+                  type: string
+                  example: GB
+                  description: Country or jurisdiction code where the organisation is licensed
+                residency:
+                  type: string
+                  example: GB
+                  description: Country of tax residency
+              required: [name, jurisdiction, residency]
+      responses:
+        "201":
+          description: Organisation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organisation"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+    get:
+      summary: List organisations
+      operationId: listOrganisations
+      tags: [Organisations]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Paginated list of organisations (ordered by created_at ascending)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organisation"
+
+  /organisations/{org_id}:
+    get:
+      summary: Get an organisation
+      operationId: getOrganisation
+      tags: [Organisations]
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      responses:
+        "200":
+          description: Organisation found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organisation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Accounts ──────────────────────────────────────────────────────────────────
+  /organisations/{org_id}/accounts:
+    post:
+      summary: Create an account
+      operationId: createAccount
+      tags: [Accounts]
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currency:
+                  $ref: "#/components/schemas/Currency"
+              required: [currency]
+      responses:
+        "201":
+          description: Account created with zero balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    get:
+      summary: List accounts for an organisation
+      operationId: listAccounts
+      tags: [Accounts]
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - name: currency
+          in: query
+          schema:
+            $ref: "#/components/schemas/Currency"
+          description: Filter by currency (case-insensitive, normalised to uppercase)
+      responses:
+        "200":
+          description: Accounts ordered by created_at ascending
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Account"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /accounts/{id}:
+    get:
+      summary: Get an account
+      operationId: getAccount
+      tags: [Accounts]
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200":
+          description: Account found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /accounts/{id}/balance:
+    get:
+      summary: Get account balance
+      operationId: getAccountBalance
+      tags: [Accounts]
+      description: |
+        Returns the settled balance, the pending reservation amount, and the derived
+        available balance (`balance - pending_amount`).
+      parameters:
+        - $ref: "#/components/parameters/AccountId"
+      responses:
+        "200":
+          description: Current balance snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountBalance"
+              example:
+                account_id: "550e8400-e29b-41d4-a716-446655440000"
+                currency: GBP
+                balance: "1000000"
+                pending_amount: "50000"
+                available: "950000"
+                updated_at: "2025-01-15T10:30:00.000Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Transactions ──────────────────────────────────────────────────────────────
+  /organisations/{org_id}/transactions:
+    post:
+      summary: Create a transaction
+      operationId: createTransaction
+      tags: [Transactions]
+      description: |
+        Synchronously validates the source wallet, atomically reserves funds
+        (`pending_amount += amount`), inserts a `PENDING` transaction, and enqueues
+        settlement via the outbox — all in a single database transaction.
+
+        The source wallet must belong to the given organisation. The destination wallet
+        may belong to any organisation.
+
+        Submitting the same `idempotency_key` again returns the original transaction
+        with HTTP 200 rather than creating a duplicate.
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotency_key:
+                  type: string
+                  description: Caller-supplied unique key. Duplicate submissions return the original response.
+                  example: "order-abc123-pay"
+                source_wallet_id:
+                  $ref: "#/components/schemas/Uuid"
+                destination_wallet_id:
+                  $ref: "#/components/schemas/Uuid"
+                amount:
+                  type: integer
+                  minimum: 1
+                  description: Amount in the smallest currency unit (pence, cents, etc.)
+                  example: 50000
+                currency:
+                  $ref: "#/components/schemas/Currency"
+              required: [idempotency_key, source_wallet_id, destination_wallet_id, amount, currency]
+      responses:
+        "201":
+          description: Transaction created and funds reserved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "200":
+          description: Duplicate idempotency key — original transaction returned unchanged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    get:
+      summary: List transactions for an organisation
+      operationId: listTransactions
+      tags: [Transactions]
+      description: |
+        Returns all transactions where the source or destination wallet belongs to the
+        given organisation, ordered by `created_at` descending.
+      parameters:
+        - $ref: "#/components/parameters/OrgId"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, SETTLED, FAILED, CANCELLED]
+          description: Filter by transaction status
+        - name: source_wallet_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/Uuid"
+          description: Filter by source wallet
+        - name: destination_wallet_id
+          in: query
+          schema:
+            $ref: "#/components/schemas/Uuid"
+          description: Filter by destination wallet
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Include only transactions created at or after this timestamp
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Include only transactions created at or before this timestamp
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /transactions/{id}:
+    get:
+      summary: Get a transaction
+      operationId: getTransaction
+      tags: [Transactions]
+      parameters:
+        - $ref: "#/components/parameters/TransactionId"
+      responses:
+        "200":
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /transactions/{id}/cancel:
+    post:
+      summary: Cancel a pending transaction
+      operationId: cancelTransaction
+      tags: [Transactions]
+      description: |
+        Best-effort cancellation. Atomically transitions status from `PENDING` to
+        `CANCELLED` and releases the reserved funds (`pending_amount -= amount`).
+
+        If the transaction has already been settled or cancelled, returns HTTP 409.
+        This is a race — the settlement worker may win between the client's check
+        and this request.
+      parameters:
+        - $ref: "#/components/parameters/TransactionId"
+      responses:
+        "200":
+          description: Transaction cancelled and funds released
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
