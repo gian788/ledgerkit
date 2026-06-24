@@ -23,6 +23,11 @@ const config: Config = {
       displayName: 'integration',
       testMatch: ['<rootDir>/src/__tests__/integration/**/*.test.ts'],
     },
+    {
+      ...sharedConfig,
+      displayName: 'e2e',
+      testMatch: ['<rootDir>/src/__tests__/e2e/**/*.test.ts'],
+    },
   ],
 };
 

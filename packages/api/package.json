@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "test": "jest --selectProjects unit",
     "test:integration": "jest --runInBand --selectProjects integration",
+    "test:e2e": "jest --runInBand --selectProjects e2e",
     "test:all": "jest --runInBand"
   },
   "dependencies": {

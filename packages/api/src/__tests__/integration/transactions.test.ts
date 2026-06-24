@@ -294,25 +294,21 @@ describe('Transactions', () => {
   // ── GET /organisations/:org_id/transactions ───────────────────────────────
 
   it('lists all transactions involving the org wallets', async () => {
-    await request(app)
-      .post(`/organisations/${orgId}/transactions`)
-      .send({
-        idempotency_key: 'list-1',
-        source_wallet_id: sourceWalletId,
-        destination_wallet_id: destWalletId,
-        amount: 100,
-        currency: 'GBP',
-      });
+    await request(app).post(`/organisations/${orgId}/transactions`).send({
+      idempotency_key: 'list-1',
+      source_wallet_id: sourceWalletId,
+      destination_wallet_id: destWalletId,
+      amount: 100,
+      currency: 'GBP',
+    });
 
-    await request(app)
-      .post(`/organisations/${orgId}/transactions`)
-      .send({
-        idempotency_key: 'list-2',
-        source_wallet_id: sourceWalletId,
-        destination_wallet_id: destWalletId,
-        amount: 200,
-        currency: 'GBP',
-      });
+    await request(app).post(`/organisations/${orgId}/transactions`).send({
+      idempotency_key: 'list-2',
+      source_wallet_id: sourceWalletId,
+      destination_wallet_id: destWalletId,
+      amount: 200,
+      currency: 'GBP',
+    });
 
     const res = await request(app).get(`/organisations/${orgId}/transactions`);
     expect(res.status).toBe(200);
@@ -320,27 +316,23 @@ describe('Transactions', () => {
   });
 
   it('filters transactions by status', async () => {
-    const createRes = await request(app)
-      .post(`/organisations/${orgId}/transactions`)
-      .send({
-        idempotency_key: 'filter-1',
-        source_wallet_id: sourceWalletId,
-        destination_wallet_id: destWalletId,
-        amount: 100,
-        currency: 'GBP',
-      });
+    const createRes = await request(app).post(`/organisations/${orgId}/transactions`).send({
+      idempotency_key: 'filter-1',
+      source_wallet_id: sourceWalletId,
+      destination_wallet_id: destWalletId,
+      amount: 100,
+      currency: 'GBP',
+    });
 
     const txId = (createRes.body as { id: string }).id;
 
-    await request(app)
-      .post(`/organisations/${orgId}/transactions`)
-      .send({
-        idempotency_key: 'filter-2',
-        source_wallet_id: sourceWalletId,
-        destination_wallet_id: destWalletId,
-        amount: 200,
-        currency: 'GBP',
-      });
+    await request(app).post(`/organisations/${orgId}/transactions`).send({
+      idempotency_key: 'filter-2',
+      source_wallet_id: sourceWalletId,
+      destination_wallet_id: destWalletId,
+      amount: 200,
+      currency: 'GBP',
+    });
 
     await request(app).post(`/transactions/${txId}/cancel`);
 
@@ -361,24 +353,20 @@ describe('Transactions', () => {
     const src2Id = (src2Res.body as { id: string }).id;
     await db('wallets').where({ id: src2Id }).update({ balance: 5_000 });
 
-    await request(app)
-      .post(`/organisations/${orgId}/transactions`)
-      .send({
-        idempotency_key: 'sw-1',
-        source_wallet_id: sourceWalletId,
-        destination_wallet_id: destWalletId,
-        amount: 100,
-        currency: 'GBP',
-      });
-    await request(app)
-      .post(`/organisations/${orgId}/transactions`)
-      .send({
-        idempotency_key: 'sw-2',
-        source_wallet_id: src2Id,
-        destination_wallet_id: destWalletId,
-        amount: 100,
-        currency: 'GBP',
-      });
+    await request(app).post(`/organisations/${orgId}/transactions`).send({
+      idempotency_key: 'sw-1',
+      source_wallet_id: sourceWalletId,
+      destination_wallet_id: destWalletId,
+      amount: 100,
+      currency: 'GBP',
+    });
+    await request(app).post(`/organisations/${orgId}/transactions`).send({
+      idempotency_key: 'sw-2',
+      source_wallet_id: src2Id,
+      destination_wallet_id: destWalletId,
+      amount: 100,
+      currency: 'GBP',
+    });
 
     const res = await request(app).get(
       `/organisations/${orgId}/transactions?source_wallet_id=${sourceWalletId}`,

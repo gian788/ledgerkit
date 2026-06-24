@@ -8,7 +8,8 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@ledger/shared": "*"
+    "@ledger/shared": "*",
+    "kafkajs": "^2.2.4"
   },
   "devDependencies": {
     "ts-node": "^10.9.2"
