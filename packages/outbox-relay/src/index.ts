@@ -1,48 +1,13 @@
-import { getDb, closeDb, config, OutboxEventType } from '@ledger/shared';
-import type { OutboxRow } from '@ledger/shared';
-import { Kafka, Partitioners, type Producer, logLevel } from 'kafkajs';
+import { getDb, closeDb, config } from '@ledger/shared';
+import { Kafka, Partitioners, logLevel } from 'kafkajs';
+import { pollOnce } from './relay';
 
-const BATCH_SIZE = 100;
 const POLL_INTERVAL_MS = 500;
 
 let isRunning = true;
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function pollOnce(db: ReturnType<typeof getDb>, producer: Producer): Promise<void> {
-  const rows = await db<OutboxRow>('outbox')
-    .where({ published: false })
-    .orderBy('created_at', 'asc')
-    .limit(BATCH_SIZE);
-
-  if (rows.length === 0) return;
-
-  for (const row of rows) {
-    const topic =
-      row.type === OutboxEventType.SETTLEMENT
-        ? config.kafka.topics.transactions
-        : config.kafka.topics.audit;
-
-    // Partition by destination wallet for SETTLEMENT (DD-10: same-wallet
-    // transactions land on the same partition for ordered, batched settlement)
-    const key =
-      row.type === OutboxEventType.SETTLEMENT
-        ? String((row.payload as { destination_wallet_id: string }).destination_wallet_id)
-        : row.transaction_id;
-
-    await producer.send({
-      topic,
-      messages: [{ key, value: JSON.stringify(row.payload) }],
-    });
-
-    // Mark published immediately after send — if relay crashes before this
-    // update, the row will be re-sent on restart. Consumers must be idempotent.
-    await db('outbox').where({ id: row.id }).update({ published: true, published_at: new Date() });
-
-    console.log(`[outbox-relay] ${row.type} ${row.id} → ${topic}`);
-  }
 }
 
 async function main(): Promise<void> {
