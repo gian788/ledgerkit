@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel in-progress runs on the same branch/PR when a new commit is pushed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── 1. Quality gate: format, lint, TypeScript build ───────────────────────
+  quality:
+    name: Lint, Format & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Check formatting (Prettier)
+        run: yarn format:check
+
+      - name: Lint (ESLint)
+        run: yarn lint
+
+      - name: Build (TypeScript)
+        run: yarn build
+
+  # ── 2. Unit tests (no Docker required) ────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # @ledger/shared has no test script — run per-package explicitly.
+      - run: yarn workspace @ledger/api test
+      - run: yarn workspace @ledger/outbox-relay test
+      - run: yarn workspace @ledger/settlement-worker test
+      - run: yarn workspace @ledger/audit-consumer test
+
+  # ── 3. Integration tests (testcontainers — Docker daemon only) ─────────────
+  # Each package spins its own containers (Postgres / MinIO) via testcontainers.
+  # No docker-compose services needed here.
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - run: yarn workspace @ledger/api test:integration
+      - run: yarn workspace @ledger/outbox-relay test:integration
+      - run: yarn workspace @ledger/settlement-worker test:integration
+      - run: yarn workspace @ledger/audit-consumer test:integration
+
+  # ── 4. E2E pipeline tests (full stack via docker compose) ─────────────────
+  # Runs only after all three earlier jobs pass.
+  e2e:
+    name: E2E Pipeline Tests
+    runs-on: ubuntu-latest
+    needs: [quality, unit-tests, integration-tests]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Start services (Postgres + Kafka + MinIO)
+        # --wait blocks until every healthcheck passes (Compose v2)
+        run: docker compose up -d --wait
+
+      - name: Run DB migrations
+        run: yarn migrate
+        env:
+          DATABASE_URL: postgresql://ledger:ledger@localhost:5432/ledger
+
+      - name: Run E2E tests
+        run: yarn test:e2e
+        env:
+          DATABASE_URL: postgresql://ledger:ledger@localhost:5432/ledger
+          KAFKA_BROKERS: localhost:9092
+          S3_ENDPOINT: http://localhost:9000
