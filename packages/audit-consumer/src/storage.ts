@@ -5,6 +5,8 @@ import {
   CreateBucketCommand,
   HeadBucketCommand,
 } from '@aws-sdk/client-s3';
+import { getMeter, getTracer } from '@ledger/shared';
+import { SpanStatusCode } from '@opentelemetry/api';
 
 export interface AuditEvent {
   event: string;
@@ -18,6 +20,14 @@ export interface AuditEvent {
 export interface AuditStorage {
   writeEvent(event: AuditEvent): Promise<void>;
 }
+
+const meter = getMeter('audit-consumer');
+const tracer = getTracer('audit-consumer');
+
+const s3WriteDurationHisto = meter.createHistogram('audit_s3_write_duration_ms', {
+  description: 'Time to write one audit event to S3 (ms)',
+  unit: 'ms',
+});
 
 /**
  * Writes audit events to S3-compatible storage as immutable JSON objects.
@@ -39,20 +49,38 @@ export class S3AuditStorage implements AuditStorage {
   }
 
   async writeEvent(event: AuditEvent): Promise<void> {
-    const ts = new Date(event.received_at);
-    const year = ts.getUTCFullYear().toString();
-    const month = String(ts.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(ts.getUTCDate()).padStart(2, '0');
-    const key = `${year}/${month}/${day}/${event.resource_id}/${event.event}_${ts.getTime()}_${randomUUID()}.json`;
+    return tracer.startActiveSpan('audit.s3_write', async (span) => {
+      span.setAttribute('audit.event_type', event.event);
+      span.setAttribute('audit.resource_type', event.resource_type);
+      span.setAttribute('audit.resource_id', event.resource_id);
 
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: JSON.stringify(event),
-        ContentType: 'application/json',
-      }),
-    );
+      const start = Date.now();
+      try {
+        const ts = new Date(event.received_at);
+        const year = ts.getUTCFullYear().toString();
+        const month = String(ts.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(ts.getUTCDate()).padStart(2, '0');
+        const key = `${year}/${month}/${day}/${event.resource_id}/${event.event}_${ts.getTime()}_${randomUUID()}.json`;
+
+        await this.client.send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+            Body: JSON.stringify(event),
+            ContentType: 'application/json',
+          }),
+        );
+
+        s3WriteDurationHisto.record(Date.now() - start);
+        span.setStatus({ code: SpanStatusCode.OK });
+        span.end();
+      } catch (err) {
+        s3WriteDurationHisto.record(Date.now() - start);
+        span.setStatus({ code: SpanStatusCode.ERROR, message: String(err) });
+        span.end();
+        throw err;
+      }
+    });
   }
 }
 

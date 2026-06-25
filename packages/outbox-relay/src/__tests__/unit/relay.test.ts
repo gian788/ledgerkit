@@ -126,6 +126,7 @@ describe('pollOnce', () => {
         {
           key: 'wallet-2',
           value: JSON.stringify(SETTLEMENT_ROW.payload),
+          headers: expect.any(Object),
         },
       ],
     });
@@ -143,6 +144,7 @@ describe('pollOnce', () => {
         {
           key: 'tx-1',
           value: JSON.stringify(AUDIT_ROW.payload),
+          headers: expect.any(Object),
         },
       ],
     });

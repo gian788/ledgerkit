@@ -1,5 +1,7 @@
-import { config } from '@ledger/shared';
+import './instrument';
+import { config, shutdownOtel, extractKafkaContext, getMeter } from '@ledger/shared';
 import { Kafka, logLevel } from 'kafkajs';
+import { context as otelContext } from '@opentelemetry/api';
 import { S3AuditStorage, makeS3Client } from './storage';
 import { processAuditMessage } from './consumer';
 
@@ -8,6 +10,14 @@ async function main(): Promise<void> {
   const storage = new S3AuditStorage(s3, config.s3.auditBucket);
   await storage.ensureBucket();
   console.log(`[audit-consumer] bucket ready: ${config.s3.auditBucket}`);
+
+  const meter = getMeter('audit-consumer');
+  const eventsCounter = meter.createCounter('audit_events_total', {
+    description: 'Total audit events processed',
+  });
+  const parseErrorCounter = meter.createCounter('audit_parse_errors_total', {
+    description: 'Audit messages that failed processing',
+  });
 
   const kafka = new Kafka({
     clientId: `${config.kafka.clientId}-audit-consumer`,
@@ -28,6 +38,7 @@ async function main(): Promise<void> {
     isShuttingDown = true;
     console.log('[audit-consumer] shutting down...');
     await consumer.disconnect();
+    await shutdownOtel();
     console.log('[audit-consumer] shutdown complete');
   };
 
@@ -38,11 +49,17 @@ async function main(): Promise<void> {
     eachMessage: async ({ message }) => {
       if (!message.value) return;
 
+      const parentCtx = extractKafkaContext(message.headers as Record<string, string | Buffer | undefined> | undefined);
+
       try {
-        await processAuditMessage(message.value.toString(), storage);
+        await otelContext.with(parentCtx, () =>
+          processAuditMessage(message.value!.toString(), storage),
+        );
+        eventsCounter.add(1);
       } catch (err) {
         // Log and continue — a poison-pill message must not stall the consumer.
         // In production, route to a DLQ here.
+        parseErrorCounter.add(1);
         console.error('[audit-consumer] failed to process message:', err);
       }
     },

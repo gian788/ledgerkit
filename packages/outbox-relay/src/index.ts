@@ -1,4 +1,5 @@
-import { getDb, closeDb, config } from '@ledger/shared';
+import './instrument';
+import { getDb, closeDb, config, shutdownOtel } from '@ledger/shared';
 import { Kafka, Partitioners, logLevel } from 'kafkajs';
 import { pollOnce } from './relay';
 
@@ -47,6 +48,7 @@ async function main(): Promise<void> {
 
   await producer.disconnect();
   await closeDb();
+  await shutdownOtel();
   console.log('[outbox-relay] shutdown complete');
 }
 

@@ -20,6 +20,11 @@ export const config = {
     port: Number(optional('PORT', '3000')),
     nodeEnv: optional('NODE_ENV', 'development'),
   },
+  otel: {
+    enabled: optional('OTEL_ENABLED', 'true') === 'true',
+    otlpEndpoint: optional('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4318'),
+    metricsPort: Number(optional('OTEL_METRICS_PORT', '9464')),
+  },
   s3: {
     endpoint: optional('S3_ENDPOINT', 'http://localhost:9000'),
     region: optional('S3_REGION', 'us-east-1'),
