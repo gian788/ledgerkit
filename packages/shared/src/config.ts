@@ -20,6 +20,14 @@ export const config = {
     port: Number(optional('PORT', '3000')),
     nodeEnv: optional('NODE_ENV', 'development'),
   },
+  s3: {
+    endpoint: optional('S3_ENDPOINT', 'http://localhost:9000'),
+    region: optional('S3_REGION', 'us-east-1'),
+    accessKeyId: optional('S3_ACCESS_KEY_ID', 'minioadmin'),
+    secretAccessKey: optional('S3_SECRET_ACCESS_KEY', 'minioadmin'),
+    auditBucket: optional('S3_AUDIT_BUCKET', 'ledger-audit'),
+    forcePathStyle: optional('S3_FORCE_PATH_STYLE', 'true') === 'true',
+  },
 } as const;
 
 export type Config = typeof config;

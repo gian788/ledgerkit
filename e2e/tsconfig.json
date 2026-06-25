@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "jest"],
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ledger/shared": ["../packages/shared/src/index.ts"],
+      "@ledger/api/*": ["../packages/api/src/*"],
+      "@ledger/outbox-relay/*": ["../packages/outbox-relay/src/*"],
+      "@ledger/settlement-worker/*": ["../packages/settlement-worker/src/*"],
+      "@ledger/audit-consumer/*": ["../packages/audit-consumer/src/*"]
+    }
+  },
+  "include": ["**/*.ts"]
+}
