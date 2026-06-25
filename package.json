@@ -8,6 +8,7 @@
     "build": "yarn workspaces run build",
     "test": "yarn workspaces run test",
     "lint": "eslint 'packages/*/src/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "migrate": "yarn workspace @ledger/shared migrate",

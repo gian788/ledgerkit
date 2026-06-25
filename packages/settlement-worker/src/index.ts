@@ -1,5 +1,12 @@
 import './instrument';
-import { getDb, closeDb, config, shutdownOtel, extractKafkaContext, getMeter } from '@ledger/shared';
+import {
+  getDb,
+  closeDb,
+  config,
+  shutdownOtel,
+  extractKafkaContext,
+  getMeter,
+} from '@ledger/shared';
 import { Kafka, logLevel } from 'kafkajs';
 import { context as otelContext } from '@opentelemetry/api';
 import { settleBatch, type SettlementPayload } from './settler';
@@ -50,7 +57,9 @@ async function main(): Promise<void> {
       const items: SettlementPayload[] = [];
 
       // Use the trace context from the first message's headers as parent span.
-      const parentCtx = extractKafkaContext(batch.messages[0]?.headers as Record<string, string | Buffer | undefined> | undefined);
+      const parentCtx = extractKafkaContext(
+        batch.messages[0]?.headers as Record<string, string | Buffer | undefined> | undefined,
+      );
 
       for (const message of batch.messages) {
         if (!message.value) continue;

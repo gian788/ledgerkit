@@ -85,10 +85,6 @@ it('writes TRANSACTION_CANCELLED with before+after preserved', async () => {
     storage,
   );
 
-  const list = await s3.send(
-    new ListObjectsV2Command({ Bucket: BUCKET, Prefix: 'tx-integration-2' }),
-  );
-
   // ListObjectsV2 doesn't search by resource_id in key path, fetch by prefix approach:
   const allList = await s3.send(new ListObjectsV2Command({ Bucket: BUCKET }));
   const key = allList.Contents?.find((o) => o.Key?.includes('tx-integration-2'))?.Key;

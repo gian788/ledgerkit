@@ -5,10 +5,7 @@ import type { AuditStorage, AuditEvent } from './storage';
  * by parsing it and writing to the audit storage. Pure function — no Kafka
  * dependency, so it is unit-testable in isolation.
  */
-export async function processAuditMessage(
-  rawValue: string,
-  storage: AuditStorage,
-): Promise<void> {
+export async function processAuditMessage(rawValue: string, storage: AuditStorage): Promise<void> {
   const payload = JSON.parse(rawValue) as Record<string, unknown>;
 
   if (

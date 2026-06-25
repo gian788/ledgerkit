@@ -101,8 +101,12 @@ it('settles a PENDING transaction: status, journal, wallet balances', async () =
   const lines = await db('journal_lines').where({ journal_entry_id: entry.id });
   expect(lines).toHaveLength(2);
 
-  const debit = lines.find((l: { direction: string }) => l.direction === JournalLineDirection.DEBIT);
-  const credit = lines.find((l: { direction: string }) => l.direction === JournalLineDirection.CREDIT);
+  const debit = lines.find(
+    (l: { direction: string }) => l.direction === JournalLineDirection.DEBIT,
+  );
+  const credit = lines.find(
+    (l: { direction: string }) => l.direction === JournalLineDirection.CREDIT,
+  );
   expect(debit?.wallet_id).toBe(srcWalletId);
   expect(credit?.wallet_id).toBe(dstWalletId);
   expect(BigInt(debit?.amount)).toBe(BigInt(credit?.amount)); // double-entry balance
@@ -200,8 +204,20 @@ it('settles a multi-item batch with same destination in one DB transaction', asy
   ]);
 
   await settleBatch(db, [
-    { transaction_id: tx1Id, source_wallet_id: src1Id, destination_wallet_id: dstId, amount: 1_000, currency: 'GBP' },
-    { transaction_id: tx2Id, source_wallet_id: src2Id, destination_wallet_id: dstId, amount: 2_000, currency: 'GBP' },
+    {
+      transaction_id: tx1Id,
+      source_wallet_id: src1Id,
+      destination_wallet_id: dstId,
+      amount: 1_000,
+      currency: 'GBP',
+    },
+    {
+      transaction_id: tx2Id,
+      source_wallet_id: src2Id,
+      destination_wallet_id: dstId,
+      amount: 2_000,
+      currency: 'GBP',
+    },
   ]);
 
   // Both transactions settled
@@ -254,8 +270,20 @@ it('processes separate destination groups independently', async () => {
   ]);
 
   await settleBatch(db, [
-    { transaction_id: tx1Id, source_wallet_id: srcId, destination_wallet_id: dst1Id, amount: 500, currency: 'GBP' },
-    { transaction_id: tx2Id, source_wallet_id: srcId, destination_wallet_id: dst2Id, amount: 1_000, currency: 'GBP' },
+    {
+      transaction_id: tx1Id,
+      source_wallet_id: srcId,
+      destination_wallet_id: dst1Id,
+      amount: 500,
+      currency: 'GBP',
+    },
+    {
+      transaction_id: tx2Id,
+      source_wallet_id: srcId,
+      destination_wallet_id: dst2Id,
+      amount: 1_000,
+      currency: 'GBP',
+    },
   ]);
 
   const [dst1] = await db('wallets').where({ id: dst1Id });

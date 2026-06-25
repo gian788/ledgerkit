@@ -48,11 +48,13 @@ function makeMockDb(tableReturns: Record<string, unknown[]>) {
   });
 
   // transaction() shim — runs the callback immediately with the same db
-  (dbFn as unknown as Knex).transaction = jest.fn().mockImplementation(
-    async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex),
-  );
+  (dbFn as unknown as Knex).transaction = jest
+    .fn()
+    .mockImplementation(async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex));
   (dbFn as unknown as Knex).raw = jest.fn().mockReturnValue('__raw__');
-  (dbFn as unknown as Knex).fn = { now: jest.fn().mockReturnValue('__now__') } as unknown as Knex['fn'];
+  (dbFn as unknown as Knex).fn = {
+    now: jest.fn().mockReturnValue('__now__'),
+  } as unknown as Knex['fn'];
 
   return { db: dbFn as unknown as Knex, mocks, dbFn };
 }
@@ -70,11 +72,6 @@ function makeSkippedChain() {
   const update = jest.fn().mockReturnValue({ returning });
   const where = jest.fn().mockReturnValue({ update });
   return { where, update, returning };
-}
-
-function makeInsertChain() {
-  const insert = jest.fn().mockResolvedValue(undefined);
-  return { insert, where: jest.fn().mockReturnValue({ update: jest.fn().mockResolvedValue(1), insert }) };
 }
 
 function makeWalletUpdateChain() {
@@ -104,9 +101,9 @@ it('skips a transaction that is no longer PENDING', async () => {
     if (table === 'wallets') return walletUpdate;
     return {};
   });
-  (dbFn as unknown as Knex).transaction = jest.fn().mockImplementation(
-    async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex),
-  );
+  (dbFn as unknown as Knex).transaction = jest
+    .fn()
+    .mockImplementation(async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex));
   (dbFn as unknown as Knex).raw = jest.fn().mockReturnValue('__raw__');
   (dbFn as unknown as Knex).fn = { now: jest.fn() } as unknown as Knex['fn'];
 
@@ -130,9 +127,9 @@ it('settles a transaction: marks SETTLED, inserts journal entry+lines, updates w
     if (table === 'wallets') return walletUpdate;
     return {};
   });
-  (dbFn as unknown as Knex).transaction = jest.fn().mockImplementation(
-    async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex),
-  );
+  (dbFn as unknown as Knex).transaction = jest
+    .fn()
+    .mockImplementation(async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex));
   (dbFn as unknown as Knex).raw = jest.fn().mockReturnValue('__raw__');
   (dbFn as unknown as Knex).fn = { now: jest.fn() } as unknown as Knex['fn'];
 
@@ -175,9 +172,9 @@ it('groups two transactions for the same destination into one DB transaction', a
   const entryInsert = jest.fn().mockResolvedValue(undefined);
   const linesInsert = jest.fn().mockResolvedValue(undefined);
   const walletUpdate = makeWalletUpdateChain();
-  const transactionSpy = jest.fn().mockImplementation(
-    async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex),
-  );
+  const transactionSpy = jest
+    .fn()
+    .mockImplementation(async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex));
 
   const dbFn = jest.fn().mockImplementation((table: string) => {
     if (table === 'transactions') return txChain;
@@ -199,15 +196,13 @@ it('groups two transactions for the same destination into one DB transaction', a
 
 it('opens separate DB transactions for different destination wallets', async () => {
   const txChain = makeSettledChain();
-  txChain.returning
-    .mockResolvedValueOnce([{ id: 'tx-1' }])
-    .mockResolvedValueOnce([{ id: 'tx-3' }]);
+  txChain.returning.mockResolvedValueOnce([{ id: 'tx-1' }]).mockResolvedValueOnce([{ id: 'tx-3' }]);
   const entryInsert = jest.fn().mockResolvedValue(undefined);
   const linesInsert = jest.fn().mockResolvedValue(undefined);
   const walletUpdate = makeWalletUpdateChain();
-  const transactionSpy = jest.fn().mockImplementation(
-    async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex),
-  );
+  const transactionSpy = jest
+    .fn()
+    .mockImplementation(async (cb: (trx: Knex) => Promise<void>) => cb(dbFn as unknown as Knex));
 
   const dbFn = jest.fn().mockImplementation((table: string) => {
     if (table === 'transactions') return txChain;

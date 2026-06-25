@@ -197,13 +197,15 @@ it('settles a transaction end-to-end: balances correct, audit event in S3', asyn
   const dstId = await createWallet(orgId);
   await fundWallet(srcId, 10_000);
 
-  const createRes = await request(app).post(`/organisations/${orgId}/transactions`).send({
-    idempotency_key: `e2e-full-${randomUUID()}`,
-    source_wallet_id: srcId,
-    destination_wallet_id: dstId,
-    amount: 3_000,
-    currency: 'GBP',
-  });
+  const createRes = await request(app)
+    .post(`/organisations/${orgId}/transactions`)
+    .send({
+      idempotency_key: `e2e-full-${randomUUID()}`,
+      source_wallet_id: srcId,
+      destination_wallet_id: dstId,
+      amount: 3_000,
+      currency: 'GBP',
+    });
   expect(createRes.status).toBe(201);
   const txId = (createRes.body as { id: string }).id;
   expect(createRes.body.status).toBe('PENDING');
@@ -254,13 +256,15 @@ it('cancels a transaction: funds released, both audit events land in S3', async 
   const dstId = await createWallet(orgId);
   await fundWallet(srcId, 5_000);
 
-  const createRes = await request(app).post(`/organisations/${orgId}/transactions`).send({
-    idempotency_key: `e2e-cancel-${randomUUID()}`,
-    source_wallet_id: srcId,
-    destination_wallet_id: dstId,
-    amount: 2_000,
-    currency: 'GBP',
-  });
+  const createRes = await request(app)
+    .post(`/organisations/${orgId}/transactions`)
+    .send({
+      idempotency_key: `e2e-cancel-${randomUUID()}`,
+      source_wallet_id: srcId,
+      destination_wallet_id: dstId,
+      amount: 2_000,
+      currency: 'GBP',
+    });
   expect(createRes.status).toBe(201);
   const txId = (createRes.body as { id: string }).id;
 

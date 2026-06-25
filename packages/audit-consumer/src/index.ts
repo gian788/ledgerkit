@@ -49,7 +49,9 @@ async function main(): Promise<void> {
     eachMessage: async ({ message }) => {
       if (!message.value) return;
 
-      const parentCtx = extractKafkaContext(message.headers as Record<string, string | Buffer | undefined> | undefined);
+      const parentCtx = extractKafkaContext(
+        message.headers as Record<string, string | Buffer | undefined> | undefined,
+      );
 
       try {
         await otelContext.with(parentCtx, () =>

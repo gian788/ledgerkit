@@ -65,7 +65,11 @@ it('adds a received_at ISO timestamp', async () => {
   const { storage, events } = makeMockStorage();
 
   await processAuditMessage(
-    JSON.stringify({ event: 'TRANSACTION_CREATED', resource_type: 'transaction', resource_id: 'x' }),
+    JSON.stringify({
+      event: 'TRANSACTION_CREATED',
+      resource_type: 'transaction',
+      resource_id: 'x',
+    }),
     storage,
   );
 
@@ -98,7 +102,11 @@ it('propagates storage write errors', async () => {
 
   await expect(
     processAuditMessage(
-      JSON.stringify({ event: 'TRANSACTION_CREATED', resource_type: 'transaction', resource_id: 'x' }),
+      JSON.stringify({
+        event: 'TRANSACTION_CREATED',
+        resource_type: 'transaction',
+        resource_id: 'x',
+      }),
       storage,
     ),
   ).rejects.toThrow('S3 unavailable');
