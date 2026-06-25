@@ -18,22 +18,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
-          cache: 'yarn'
+          bun-version: latest
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install
 
       - name: Check formatting (Prettier)
-        run: yarn format:check
+        run: bun run format:check
 
       - name: Lint (ESLint)
-        run: yarn lint
+        run: bun run lint
 
       - name: Build (TypeScript)
-        run: yarn build
+        run: bun run build
 
   # ── 2. Unit tests (no Docker required) ────────────────────────────────────
   unit-tests:
@@ -42,19 +41,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
-          cache: 'yarn'
+          bun-version: latest
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install
 
       # @ledger/shared has no test script — run per-package explicitly.
-      - run: yarn workspace @ledger/api test
-      - run: yarn workspace @ledger/outbox-relay test
-      - run: yarn workspace @ledger/settlement-worker test
-      - run: yarn workspace @ledger/audit-consumer test
+      - run: bun run --filter=@ledger/api test
+      - run: bun run --filter=@ledger/outbox-relay test
+      - run: bun run --filter=@ledger/settlement-worker test
+      - run: bun run --filter=@ledger/audit-consumer test
 
   # ── 3. Integration tests (testcontainers — Docker daemon only) ─────────────
   # Each package spins its own containers (Postgres / MinIO) via testcontainers.
@@ -65,18 +63,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
-          cache: 'yarn'
+          bun-version: latest
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install
 
-      - run: yarn workspace @ledger/api test:integration
-      - run: yarn workspace @ledger/outbox-relay test:integration
-      - run: yarn workspace @ledger/settlement-worker test:integration
-      - run: yarn workspace @ledger/audit-consumer test:integration
+      - run: bun run --filter=@ledger/api test:integration
+      - run: bun run --filter=@ledger/outbox-relay test:integration
+      - run: bun run --filter=@ledger/settlement-worker test:integration
+      - run: bun run --filter=@ledger/audit-consumer test:integration
 
   # ── 4. E2E pipeline tests (full stack via docker compose) ─────────────────
   # Runs only after all three earlier jobs pass.
@@ -87,25 +84,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '22'
-          cache: 'yarn'
+          bun-version: latest
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install
 
       - name: Start services (Postgres + Kafka + MinIO)
         # --wait blocks until every healthcheck passes (Compose v2)
         run: docker compose up -d --wait
 
       - name: Run DB migrations
-        run: yarn migrate
+        run: bun run migrate
         env:
           DATABASE_URL: postgresql://ledger:ledger@localhost:5432/ledger
 
       - name: Run E2E tests
-        run: yarn test:e2e
+        run: bun run test:e2e
         env:
           DATABASE_URL: postgresql://ledger:ledger@localhost:5432/ledger
           KAFKA_BROKERS: localhost:9092

@@ -4,20 +4,21 @@
   "workspaces": [
     "packages/*"
   ],
+  "packageManager": "bun@1.2.0",
   "scripts": {
-    "build": "yarn workspaces run build",
-    "test": "yarn workspaces run test",
+    "build": "bun run --filter='*' build",
+    "test": "bun run --filter='*' test",
     "lint": "eslint 'packages/*/src/**/*.ts'",
     "lint:fix": "eslint --fix 'packages/*/src/**/*.ts'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "migrate": "yarn workspace @ledger/shared migrate",
-    "migrate:rollback": "yarn workspace @ledger/shared migrate:rollback",
-    "dev": "concurrently -n api,worker,relay,audit -c cyan,green,yellow,magenta \"yarn dev:api\" \"yarn dev:settlement-worker\" \"yarn dev:outbox-relay\" \"yarn dev:audit-consumer\"",
-    "dev:api": "yarn workspace @ledger/api dev",
-    "dev:settlement-worker": "yarn workspace @ledger/settlement-worker dev",
-    "dev:outbox-relay": "yarn workspace @ledger/outbox-relay dev",
-    "dev:audit-consumer": "yarn workspace @ledger/audit-consumer dev",
+    "migrate": "bun run --filter=@ledger/shared migrate",
+    "migrate:rollback": "bun run --filter=@ledger/shared migrate:rollback",
+    "dev": "concurrently -n api,worker,relay,audit -c cyan,green,yellow,magenta \"bun run dev:api\" \"bun run dev:settlement-worker\" \"bun run dev:outbox-relay\" \"bun run dev:audit-consumer\"",
+    "dev:api": "bun run --filter=@ledger/api dev",
+    "dev:settlement-worker": "bun run --filter=@ledger/settlement-worker dev",
+    "dev:outbox-relay": "bun run --filter=@ledger/outbox-relay dev",
+    "dev:audit-consumer": "bun run --filter=@ledger/audit-consumer dev",
     "test:e2e": "jest --runInBand --config e2e/jest.config.ts"
   },
   "devDependencies": {
