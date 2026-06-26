@@ -6,6 +6,14 @@ const sharedConfig = {
   moduleNameMapper: {
     '^@ledger/shared$': '<rootDir>/../shared/src/index.ts',
   },
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: {
+        baseUrl: '.',
+        paths: { '@ledger/shared': ['../shared/src/index.ts'] },
+      },
+    }] as [string, Record<string, unknown>],
+  },
 };
 
 const config: Config = {
