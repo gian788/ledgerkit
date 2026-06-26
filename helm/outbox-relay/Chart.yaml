@@ -1,0 +1,6 @@
+apiVersion: v2
+name: outbox-relay
+description: Ledger outbox relay — polls outbox table and publishes to Kafka
+type: application
+version: 0.1.0
+appVersion: "latest"

@@ -1,0 +1,45 @@
+replicaCount: 3
+
+image:
+  repository: ghcr.io/org/ledger
+  tag: ""
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# KEDA ScaledObject — scales replicas based on Kafka consumer lag.
+# Requires KEDA operator installed in the cluster.
+# Replicas are capped at the number of topic partitions (12) to avoid idle workers.
+keda:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 12
+  # Scale up when average lag per partition exceeds this threshold
+  lagThreshold: "100"
+  offsetResetPolicy: latest
+
+env:
+  KAFKA_BROKERS: kafka:9092
+  KAFKA_TOPIC_TRANSACTIONS: transactions.pending
+  OTEL_ENABLED: "true"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  OTEL_METRICS_PORT: "9464"
+
+secrets:
+  name: ledger-settlement-worker
+  databaseUrlKey: DATABASE_URL
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9464"
+  prometheus.io/path: /metrics

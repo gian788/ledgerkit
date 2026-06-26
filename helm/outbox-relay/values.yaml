@@ -1,0 +1,39 @@
+# Two replicas: one active leader, one hot standby for fast failover.
+# Leader election uses the K8s Lease API (coordination.k8s.io/leases).
+replicaCount: 2
+
+image:
+  repository: ghcr.io/org/ledger
+  tag: ""
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+leaderElection:
+  # Name of the Lease object used for leader election
+  leaseName: outbox-relay-leader
+
+env:
+  KAFKA_BROKERS: kafka:9092
+  OTEL_ENABLED: "true"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  OTEL_METRICS_PORT: "9464"
+
+secrets:
+  name: ledger-outbox-relay
+  databaseUrlKey: DATABASE_URL
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9464"
+  prometheus.io/path: /metrics

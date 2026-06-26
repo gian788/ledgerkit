@@ -1,0 +1,35 @@
+{{- if .Values.serviceAccount.create }}
+# The outbox relay uses K8s Lease API for leader election so only one replica
+# actively polls and publishes at any time (the other is a hot standby).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "outbox-relay.fullname" . }}-leader-election
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "outbox-relay.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    resourceNames: ["{{ .Values.leaderElection.leaseName }}"]
+    verbs: ["get", "watch", "update"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "outbox-relay.fullname" . }}-leader-election
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "outbox-relay.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "outbox-relay.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "outbox-relay.fullname" . }}-leader-election
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

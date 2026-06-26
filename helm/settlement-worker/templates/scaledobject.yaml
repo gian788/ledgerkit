@@ -1,0 +1,30 @@
+{{- if .Values.keda.enabled }}
+# Requires KEDA (Kubernetes Event-driven Autoscaling) operator.
+# Install: https://keda.sh/docs/latest/deploy/
+# Scales settlement-worker replicas based on transactions.pending consumer lag.
+# Upper bound is capped at the topic partition count (12) so each replica handles ≥1 partition.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "settlement-worker.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "settlement-worker.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "settlement-worker.fullname" . }}
+  minReplicaCount: {{ .Values.keda.minReplicas }}
+  maxReplicaCount: {{ .Values.keda.maxReplicas }}
+  pollingInterval: 15
+  cooldownPeriod: 30
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: {{ .Values.env.KAFKA_BROKERS }}
+        consumerGroup: settlement-worker
+        topic: {{ .Values.env.KAFKA_TOPIC_TRANSACTIONS }}
+        lagThreshold: {{ .Values.keda.lagThreshold | quote }}
+        offsetResetPolicy: {{ .Values.keda.offsetResetPolicy }}
+{{- end }}
