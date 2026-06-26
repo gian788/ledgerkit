@@ -5,7 +5,12 @@ import type { Organisation, Wallet } from '@ledger/shared';
 import { AppError } from '../middleware/errorHandler';
 import { requireString } from '../utils/validation';
 
-export function makeAccountsController(db: Knex) {
+export function makeAccountsController(db: Knex): {
+  create: RequestHandler;
+  list: RequestHandler;
+  getById: RequestHandler;
+  getBalance: RequestHandler;
+} {
   const create: RequestHandler = async (req, res, next) => {
     try {
       const { org_id } = req.params as { org_id: string };

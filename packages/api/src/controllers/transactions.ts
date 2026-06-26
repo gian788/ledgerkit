@@ -15,7 +15,12 @@ function isUniqueViolation(err: unknown): boolean {
   );
 }
 
-export function makeTransactionsController(db: Knex) {
+export function makeTransactionsController(db: Knex): {
+  create: RequestHandler;
+  getById: RequestHandler;
+  cancel: RequestHandler;
+  list: RequestHandler;
+} {
   const create: RequestHandler = async (req, res, next) => {
     try {
       const { org_id } = req.params as { org_id: string };

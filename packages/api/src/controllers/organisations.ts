@@ -5,7 +5,11 @@ import type { Organisation } from '@ledger/shared';
 import { AppError } from '../middleware/errorHandler';
 import { requireString } from '../utils/validation';
 
-export function makeOrganisationsController(db: Knex) {
+export function makeOrganisationsController(db: Knex): {
+  create: RequestHandler;
+  list: RequestHandler;
+  getById: RequestHandler;
+} {
   const create: RequestHandler = async (req, res, next) => {
     try {
       const body = req.body as Record<string, unknown>;
