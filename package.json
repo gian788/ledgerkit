@@ -25,6 +25,8 @@
     "@testcontainers/kafka": "^12.0.3",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.0",
+    "@types/pg": "^8.11.0",
+    "knex": "^3.1.0",
     "@types/supertest": "^7.2.0",
     "concurrently": "^10.0.3",
     "eslint": "^9.17.0",
