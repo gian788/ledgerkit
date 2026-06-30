@@ -5,8 +5,9 @@ import { errorHandler } from './middleware/errorHandler';
 import { makeOrganisationRoutes } from './routes/organisations';
 import { makeAccountRoutes } from './routes/accounts';
 import { makeTransactionRoutes } from './routes/transactions';
+import { makeDebugRoutes } from './routes/debug';
 
-export function createApp(db: Knex): express.Application {
+export function createApp(db: Knex, nodeEnv = process.env['NODE_ENV'] ?? 'development'): express.Application {
   const app = express();
 
   // Serialize BigInt as string — amounts from the DB are BigInt, JSON.stringify
@@ -27,6 +28,11 @@ export function createApp(db: Knex): express.Application {
   app.use('/organisations', makeOrganisationRoutes(db));
   app.use('/accounts', makeAccountRoutes(db));
   app.use('/transactions', makeTransactionRoutes(db));
+
+  // ── Debug/test-only routes (non-production only) ──────────────────────────
+  if (nodeEnv !== 'production') {
+    app.use('/debug', makeDebugRoutes(db));
+  }
 
   // ── 404 catch-all ─────────────────────────────────────────────────────────
   app.use((_req, res) => {
