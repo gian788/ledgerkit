@@ -3,12 +3,12 @@ replicaCount: 2
 image:
   repository: ghcr.io/org/ledger
   # tag defaults to Chart.appVersion
-  tag: ""
+  tag: ''
   pullPolicy: IfNotPresent
 
 serviceAccount:
   create: true
-  name: ""
+  name: ''
 
 service:
   type: ClusterIP
@@ -32,11 +32,11 @@ autoscaling:
 # Non-sensitive environment variables
 env:
   NODE_ENV: production
-  PORT: "3000"
+  PORT: '3000'
   KAFKA_BROKERS: kafka:9092
-  OTEL_ENABLED: "true"
+  OTEL_ENABLED: 'true'
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-  OTEL_METRICS_PORT: "9464"
+  OTEL_METRICS_PORT: '9464'
 
 # Sensitive env vars — create the secret out-of-band then reference it here
 secrets:
@@ -46,6 +46,6 @@ secrets:
   databaseUrlKey: DATABASE_URL
 
 podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "9464"
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '9464'
   prometheus.io/path: /metrics

@@ -3,4 +3,4 @@ name: settlement-worker
 description: Ledger settlement worker — Kafka consumer, batch double-entry settlement
 type: application
 version: 0.1.0
-appVersion: "latest"
+appVersion: 'latest'

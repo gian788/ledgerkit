@@ -4,12 +4,12 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/org/ledger
-  tag: ""
+  tag: ''
   pullPolicy: IfNotPresent
 
 serviceAccount:
   create: true
-  name: ""
+  name: ''
 
 resources:
   requests:
@@ -25,15 +25,15 @@ leaderElection:
 
 env:
   KAFKA_BROKERS: kafka:9092
-  OTEL_ENABLED: "true"
+  OTEL_ENABLED: 'true'
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-  OTEL_METRICS_PORT: "9464"
+  OTEL_METRICS_PORT: '9464'
 
 secrets:
   name: ledger-outbox-relay
   databaseUrlKey: DATABASE_URL
 
 podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "9464"
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '9464'
   prometheus.io/path: /metrics

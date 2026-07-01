@@ -3,4 +3,4 @@ name: audit-consumer
 description: Ledger audit consumer — writes Kafka audit events to S3-compatible storage
 type: application
 version: 0.1.0
-appVersion: "latest"
+appVersion: 'latest'

@@ -2,12 +2,12 @@ replicaCount: 3
 
 image:
   repository: ghcr.io/org/ledger
-  tag: ""
+  tag: ''
   pullPolicy: IfNotPresent
 
 serviceAccount:
   create: true
-  name: ""
+  name: ''
 
 resources:
   requests:
@@ -25,21 +25,21 @@ keda:
   minReplicas: 1
   maxReplicas: 12
   # Scale up when average lag per partition exceeds this threshold
-  lagThreshold: "100"
+  lagThreshold: '100'
   offsetResetPolicy: latest
 
 env:
   KAFKA_BROKERS: kafka:9092
   KAFKA_TOPIC_TRANSACTIONS: transactions.pending
-  OTEL_ENABLED: "true"
+  OTEL_ENABLED: 'true'
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-  OTEL_METRICS_PORT: "9464"
+  OTEL_METRICS_PORT: '9464'
 
 secrets:
   name: ledger-settlement-worker
   databaseUrlKey: DATABASE_URL
 
 podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "9464"
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '9464'
   prometheus.io/path: /metrics
