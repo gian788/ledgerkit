@@ -7,7 +7,10 @@ import { makeAccountRoutes } from './routes/accounts';
 import { makeTransactionRoutes } from './routes/transactions';
 import { makeDebugRoutes } from './routes/debug';
 
-export function createApp(db: Knex, nodeEnv = process.env['NODE_ENV'] ?? 'development'): express.Application {
+export function createApp(
+  db: Knex,
+  nodeEnv = process.env['NODE_ENV'] ?? 'development',
+): express.Application {
   const app = express();
 
   // Serialize BigInt as string — amounts from the DB are BigInt, JSON.stringify
